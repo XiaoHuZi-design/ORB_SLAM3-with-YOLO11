@@ -11,6 +11,7 @@ OpenCV 4.2.0
 yolov5版本作者下自带的yolo权重文件已不再支持，需要下载最新版本的yolo.pt权重文件，并且转为torchscript文件格式
 
 在开源基础框架上改进更新：详见 [V4.0_MOTION_COMPENSATION_UPDATE.md](./V4.0_MOTION_COMPENSATION_UPDATE.md) 文档
+[1](./INTEGRATION_LOG.md) | [2](./PARAMETER_FLOW_ARCHITECTURE.md)  | [3](./POINTCLOUDMAPPER_CHANGES.md)  | [4](./POINTCLOUDMAPPER_FINAL_STATUS.md) 
 
 ------------------------------以下为yolov5版本README文件----------------------------------------------------------
 
