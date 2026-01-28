@@ -1,0 +1,10 @@
+./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM3.yaml /home/tianbot/ht/dataset/rgbd_dataset_freiburg3_walking_xyz /home/tianbot/ht/dataset/rgbd_dataset_freiburg3_walking_xyz/associations.txt
+
+./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM3.yaml /media/tianbot/Elements/VSlam/酸辣面slam/视觉slam/数据集/TUM/dynamic_object/rgbd_dataset_freiburg3_walking_static /media/tianbot/Elements/VSlam/酸辣面slam/视觉slam/数据集/TUM/dynamic_object/rgbd_dataset_freiburg3_walking_static/associations.txt
+
+
+----------------------------------------------------
+
+./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM1.yaml /media/tianbot/Elements/VSlam/酸辣面slam/视觉slam/数据集/TUM/rgbd_dataset_freiburg1_desk /media/tianbot/Elements/VSlam/酸辣面slam/视觉slam/数据集/TUM/rgbd_dataset_freiburg1_desk/associations.txt
+
+./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM1.yaml /media/tianbot/Elements/VSlam/酸辣面slam/视觉slam/数据集/TUM/rgbd_dataset_freiburg1_xyz /media/tianbot/Elements/VSlam/酸辣面slam/视觉slam/数据集/TUM/rgbd_dataset_freiburg1_xyz/associations.txt
