@@ -199,12 +199,14 @@ bool YoloDetection::Detect()//检测器
             }
         }
         
-        // 如果没有检测到动态物体，创建默认区域
-        if (mvDynamicArea.size() == 0)
-        {
-            cv::Rect2i tDynamicArea(1, 1, 1, 1);
-            mvDynamicArea.push_back(tDynamicArea);
-        }
+        // ========== 修复动态残影问题：不再创建默认区域 ==========
+        // 原问题：默认区域 (1,1,1,1) 太小，导致 YOLO 漏检时人体点云被加入地图形成残影
+        // 新方案：保持 mvDynamicArea 为空，在 PointCloudMapper 中检查并跳过没有动态信息的帧
+        // if (mvDynamicArea.size() == 0)
+        // {
+        //     cv::Rect2i tDynamicArea(1, 1, 1, 1);
+        //     mvDynamicArea.push_back(tDynamicArea);
+        // }
     }
     return true;
 

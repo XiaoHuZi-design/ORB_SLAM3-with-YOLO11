@@ -13,8 +13,11 @@ PointCloudMapper::PointCloudMapper() //double resolution = 0.04  double meank = 
     cout << "Global map initialized" << endl;
     // 使用 make_shared 创建体素滤波器
     mpVoxel = pcl::make_shared<pcl::VoxelGrid<PointT>>();
-    mpVoxel->setLeafSize(0.008, 0.008, 0.008); //0.01
+    mpVoxel->setLeafSize(0.01, 0.01, 0.01); //0.01
     cout << "Voxel filter initialized" << endl;
+
+    // ========== 初始化动态检测标志位 ==========
+    mHasDetectedDynamic = false;  // 初始状态：未检测到动态物体（假设为静态场景）
 
     // ========== 暂时禁用统计滤波器（避免段错误）==========
     // // 使用 make_shared 创建统计滤波器
@@ -52,6 +55,54 @@ void PointCloudMapper::InsertKeyFrame(KeyFrame *kf, cv::Mat &imRGB, cv::Mat &imD
 
 PointCloud::Ptr PointCloudMapper::GeneratePointCloud(KeyFrame *kf, cv::Mat &imRGB, cv::Mat &imDepth)
 {
+    // ========== 修复动态残影问题 v3：智能场景识别 ==========
+    // 原问题：默认区域 (1,1,1,1) 太小导致漏检时人体残影
+    // v1问题：跳过整帧导致静态背景丢失
+    // v2问题：无法区分纯静态场景和动态场景漏检
+    // v3方案：使用 mHasDetectedDynamic 标志位区分场景
+    //
+    // 逻辑：
+    // - 纯静态场景（从未检测到人）：正常生成点云，不做动态剔除
+    // - 动态场景（曾经检测到过人）：
+    //   - 检测到人：正常剔除动态区域
+    //   - 漏检：返回空点云（避免残影）
+
+    bool hasValidDynamicArea = !kf->mvDynamicArea.empty();
+    bool isDefaultArea = false;
+
+    // 检查是否是默认的无意义区域（回退兼容）
+    if (hasValidDynamicArea && kf->mvDynamicArea.size() == 1) {
+        const cv::Rect& area = kf->mvDynamicArea[0];
+        if (area.width <= 2 && area.height <= 2) {
+            isDefaultArea = true;
+        }
+    }
+
+    // 判断是否有有效的动态区域
+    bool hasDynamic = hasValidDynamicArea && !isDefaultArea;
+
+    if (hasDynamic) {
+        // 检测到动态物体 → 标记为动态场景
+        if (!mHasDetectedDynamic) {
+            mHasDetectedDynamic = true;
+            cout << "[PointCloudMapper] Dynamic scene detected! Switching to dynamic mapping mode." << endl;
+        }
+    }
+
+    // 场景判断和处理逻辑
+    if (!hasDynamic) {
+        // 没有检测到动态区域
+        if (mHasDetectedDynamic) {
+            // 曾经检测到过人 → 现在空了是漏检 → 返回空点云（保守策略）
+            cout << "[PointCloudMapper] Dynamic scene: no detection this frame (likely miss), using conservative strategy" << endl;
+            return pcl::make_shared<PointCloud>();
+        } else {
+            // 从未检测到人 → 纯静态场景 → 正常生成点云，不做动态剔除
+            // cout << "[PointCloudMapper] Static scene detected, generating point cloud without dynamic filtering" << endl;
+        }
+    }
+    // 如果 hasDynamic 为 true，继续执行后续的动态剔除逻辑
+
     PointCloud::Ptr pointCloud_temp(new PointCloud);
 
     // ========== 优化修改：添加深度范围常量 ==========
@@ -119,9 +170,20 @@ void PointCloudMapper::run()
             cout << "==============Insert No. " << ID << "KeyFrame ================" << endl;
             ID++;
 
+            // ========== 修复动态残影问题 v2：检查点云是否有效 ==========
+            // 如果点云为空（YOLO漏检时的保守策略），只输出日志但继续处理
+            if (pointCloud_new->empty()) {
+                cout << "[PointCloudMapper] Frame has no valid dynamic area, using conservative strategy (empty point cloud)" << endl;
+                // 不 continue，而是继续处理（虽然该帧为空，但不会打断地图构建流程）
+            }
+
             // ========== 简化版：只保留原有逻辑 + 深度优化 ==========
             // 添加到全局地图
             *mpGlobalMap += *pointCloud_new;
+
+            // ========== 临时：保存滤波前的点云 ==========
+            pcl::io::savePCDFileBinary("/home/tianbot/ht/PaperCode/ORB_SLAM3-with-YOLO11/before_voxel_filter.pcd", *mpGlobalMap);
+            cout << "[PointCloudMapper] Before filter: " << mpGlobalMap->size() << " points saved" << endl;
 
             // 创建临时点云用于体素滤波
             PointCloud::Ptr temp(new PointCloud);

@@ -52,6 +52,10 @@ public:
     pcl::StatisticalOutlierRemoval<PointT>::Ptr mpStatisticalFilter;
     int mKeyFrameSize;
 
+    // ========== 修复动态场景/静态场景兼容性问题 ==========
+    // 标志位：是否曾经检测到过动态物体（用于区分纯静态场景和动态场景的漏检）
+    bool mHasDetectedDynamic;
+
 
 };
 
